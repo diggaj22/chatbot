@@ -1,0 +1,25 @@
+# ==============================================================================
+# Render Infrastructure Blueprint Configuration (render.yaml)
+# Project: Gemini C++ Full-Stack AI Chatbot
+# Authors: Shantanu, Diggaj, Raj, Suraj, and Sanika
+# ==============================================================================
+
+services:
+  - type: web
+    name: gemini-cpp-chatbot
+    env: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    region: oregon
+    branch: main
+    autoDeploy: true
+    healthCheckPath: /api/health
+    envVars:
+      - key: GEMINI_API_KEY
+        sync: false # Must be entered in the Render Dashboard secrets panel
+      - key: DATABASE_URL
+        sync: false # PostgreSQL connection string for persistent accounts
+      - key: SESSION_SECRET
+        sync: false # Long random secret used to sign HttpOnly session cookies
+      - key: PORT
+        value: 10000

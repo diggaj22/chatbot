@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DRSSS AI | Intelligent Assistant</title>
+  <meta name="description" content="DRSSS AI - Next-generation intelligent conversational assistant powered by a high-performance C++ backend and dual-model automatic failover. Built by Shantanu, Diggaj, Raj, Suraj, and Sanika.">
+
+  <!-- Favicon / SVG Icon (DRSSS Sparkle) -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%238ab4f8'><path d='M12 2C12.5 7.5 16.5 11.5 22 12C16.5 12.5 12.5 16.5 12 22C11.5 16.5 7.5 12.5 2 12C7.5 11.5 11.5 7.5 12 2Z'/></svg>">
+
+  <!-- Google Fonts: Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <!-- FontAwesome 6 for Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Highlight.js GitHub Dark Theme -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+
+  <!-- Custom Stylesheet -->
+  <link rel="stylesheet" href="style.css">
+
+  <!-- DOMPurify for HTML sanitization -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.9/purify.min.js"></script>
+
+</head>
+<body>
+  <div class="app-layout" id="appLayout">
+    <!-- Mobile Backdrop Overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay" aria-hidden="true"></div>
+
+    <!-- Collapsible Sidebar -->
+    <aside class="sidebar" id="sidebar" aria-label="Conversation Navigation">
+      <!-- Sidebar Header with Single Desktop Toggle & Mobile Close -->
+      <div class="sidebar-header">
+        <div class="brand">
+          <div class="brand-sparkle" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="sparkle-icon">
+              <path d="M12 2C12.5 7.5 16.5 11.5 22 12C16.5 12.5 12.5 16.5 12 22C11.5 16.5 7.5 12.5 2 12C7.5 11.5 11.5 7.5 12 2Z" fill="url(#brandGrad)"/>
+              <defs>
+                <linearGradient id="brandGrad" x1="2" y1="2" x2="22" y2="22" gradientUnits="userSpaceOnUse">
+                  <stop stop-color="#8ab4f8"/>
+                  <stop offset="0.5" stop-color="#c58af9"/>
+                  <stop offset="1" stop-color="#7cacf8"/>
+                </linearGradient>
+              </defs>
+            </svg>
+          </div>
+          <span class="brand-title">DRSSS AI</span>
+        </div>
+
+        <div class="sidebar-header-actions">
+          <!-- Desktop collapse toggle (visible only on desktop when sidebar is open) -->
+          <button class="icon-btn sidebar-collapse-btn" id="sidebarCollapseBtn" aria-label="Collapse sidebar" title="Collapse sidebar">
+            <i class="fa-solid fa-bars"></i>
+          </button>
+          <!-- Mobile drawer close button (visible only on mobile) -->
+          <button class="icon-btn sidebar-close-btn" id="sidebarCloseBtn" aria-label="Close sidebar" title="Close menu">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Action Button: New Chat -->
+      <div class="sidebar-action">
+        <button class="new-chat-btn" id="newChatBtn" aria-label="New chat">
+          <i class="fa-solid fa-plus"></i>
+          <span>New chat</span>
+        </button>
+      </div>
+
+      <!-- Compact Understated Search Bar -->
+      <div class="sidebar-search">
+        <div class="search-input-wrapper">
+          <i class="fa-solid fa-magnifying-glass search-icon"></i>
+          <input type="text" id="threadSearchInput" placeholder="Search chats..." aria-label="Search conversations">
+          <button class="clear-search-btn" id="clearSearchBtn" aria-label="Clear search" style="display: none;">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Recent Conversations List -->
+      <div class="threads-container">
+        <div class="threads-label">Recent</div>
+        <ul class="threads-list" id="threadsList" role="list">
+          <!-- Dynamically populated via script.js -->
+        </ul>
+        <div class="no-threads-hint" id="noThreadsHint" style="display: none;">
+          No conversations found
+        </div>
+      </div>
+
+      <!-- Modernized Seamless Account Area (No Bulky Outlines) -->
+      <div class="sidebar-footer">
+        <div class="account-row" id="accountRow">
+          <!-- Guest State -->
+          <div class="account-profile-group" id="guestProfileGroup">
+            <div class="account-avatar guest-avatar" aria-hidden="true">
+              <i class="fa-regular fa-user"></i>
+            </div>
+            <div class="account-info">
+              <span class="account-name">Guest</span>
+              <span class="account-status">Local storage</span>
+            </div>
+          </div>
+
+          <!-- Authenticated State -->
+          <div class="account-profile-group" id="userProfileGroup" style="display: none;">
+            <div class="account-avatar user-avatar" id="userAvatarInitial" aria-hidden="true">D</div>
+            <div class="account-info">
+              <span class="account-name" id="userNameText">Account</span>
+              <span class="account-status" id="userEmailText">Verified user</span>
+            </div>
+          </div>
+
+          <!-- Account Actions -->
+          <div class="account-actions">
+            <button class="account-signin-btn" id="signInFallbackBtn" aria-label="Sign in" title="Sign in">
+              <i class="fa-regular fa-user" aria-hidden="true"></i>
+              <span>Sign In</span>
+            </button>
+            <button class="icon-btn account-action-btn" id="signOutBtn" aria-label="Sign out" title="Sign out" style="display: none;">
+              <i class="fa-solid fa-arrow-right-from-bracket"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Muted Project Credits (Single Instance) -->
+        <div class="sidebar-credits">
+          <p class="credit-names">Built by Shantanu, Diggaj, Raj, Suraj, and Sanika.</p>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content" role="main">
+      <!-- Minimal Top Navigation Bar -->
+      <header class="topbar">
+        <div class="topbar-left">
+          <!-- Single Sidebar Expand Button (Shown on desktop when collapsed OR always on mobile) -->
+          <button class="icon-btn sidebar-expand-btn" id="sidebarExpandBtn" aria-label="Open sidebar" title="Open menu">
+            <i class="fa-solid fa-bars"></i>
+          </button>
+          <div class="active-thread-info">
+            <h1 class="thread-title" id="activeThreadTitle">DRSSS AI</h1>
+          </div>
+        </div>
+
+        <div class="topbar-right">
+          <!-- Dynamic AI Engine Status Indicator -->
+          <div class="model-indicator" id="modelIndicator" title="Checking DRSSS engine health...">
+            <span class="status-dot online" id="statusDot"></span>
+            <span class="model-name" id="modelStatusText">AI Engine</span>
+          </div>
+
+          <!-- Header Actions -->
+          <div class="topbar-actions">
+            <button class="icon-btn" id="downloadZipBtn" aria-label="Download Full Project ZIP" title="Download Full Project ZIP">
+              <i class="fa-solid fa-file-zipper"></i>
+            </button>
+            <button class="icon-btn" id="clearChatBtn" aria-label="Clear current conversation" title="Clear conversation">
+              <i class="fa-regular fa-trash-can"></i>
+            </button>
+            <button class="icon-btn" id="exportChatBtn" aria-label="Export conversation as Markdown" title="Export as Markdown">
+              <i class="fa-solid fa-arrow-down-to-bracket"></i>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <!-- Scrollable Chat Messages Viewport -->
+      <div class="chat-viewport" id="chatViewport">
+        <!-- New Chat Landing Screen (Shown when conversation is empty) -->
+        <section class="welcome-screen" id="welcomeScreen">
+          <div class="welcome-hero-content">
+            <div class="welcome-sparkle-hero">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="hero-sparkle-svg">
+                <path d="M12 2C12.5 7.5 16.5 11.5 22 12C16.5 12.5 12.5 16.5 12 22C11.5 16.5 7.5 12.5 2 12C7.5 11.5 11.5 7.5 12 2Z" fill="url(#heroGrad)"/>
+                <defs>
+                  <linearGradient id="heroGrad" x1="2" y1="2" x2="22" y2="22" gradientUnits="userSpaceOnUse">
+                    <stop stop-color="#8ab4f8"/>
+                    <stop offset="0.6" stop-color="#c58af9"/>
+                    <stop offset="1" stop-color="#7cacf8"/>
+                  </linearGradient>
+                </defs>
+              </svg>
+            </div>
+            <h2 class="welcome-title">How can I help you today?</h2>
+            <p class="welcome-subtitle">Ask anything, explore ideas, or build something amazing.</p>
+          </div>
+
+          <!-- Restrained Quick-Start Suggestion Cards -->
+          <div class="prompt-cards-grid">
+            <button class="prompt-card" data-prompt="Explain a difficult concept: explain quantum computing, superposition, and qubits in simple, intuitive terms with everyday analogies.">
+              <div class="card-icon"><i class="fa-solid fa-compass"></i></div>
+              <div class="card-body">
+                <h3>Explain a difficult concept</h3>
+                <p>Break down complex ideas into intuitive, everyday terms</p>
+              </div>
+            </button>
+
+            <button class="prompt-card" data-prompt="Help me write code: write a modern, thread-safe producer-consumer queue in modern C++ with std::mutex and std::condition_variable.">
+              <div class="card-icon"><i class="fa-solid fa-code"></i></div>
+              <div class="card-body">
+                <h3>Help me write code</h3>
+                <p>Draft clean, modern functions or debug existing logic</p>
+              </div>
+            </button>
+
+            <button class="prompt-card" data-prompt="Brainstorm creative ideas: generate 5 innovative product concepts that leverage AI to streamline everyday knowledge work.">
+              <div class="card-icon"><i class="fa-regular fa-lightbulb"></i></div>
+              <div class="card-body">
+                <h3>Brainstorm creative ideas</h3>
+                <p>Explore fresh angles, product names, or story outlines</p>
+              </div>
+            </button>
+
+            <button class="prompt-card" data-prompt="Summarize a topic: summarize the key architectural principles of high-performance microservices and cloud scalability.">
+              <div class="card-icon"><i class="fa-regular fa-newspaper"></i></div>
+              <div class="card-body">
+                <h3>Summarize a topic</h3>
+                <p>Get key takeaways and structured bullet points quickly</p>
+              </div>
+            </button>
+          </div>
+        </section>
+
+        <!-- Message List Container -->
+        <div class="messages-list" id="messagesList" role="log" aria-live="polite">
+          <!-- Dynamically populated via script.js -->
+        </div>
+
+        <!-- Live Thinking Status Area -->
+        <div class="thinking-status-row" id="typingIndicator" style="display: none;" role="status" aria-live="polite" aria-label="DRSSS AI is generating response">
+          <div class="assistant-sparkle thinking-sparkle" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="avatar-sparkle">
+              <path d="M12 2C12.5 7.5 16.5 11.5 22 12C16.5 12.5 12.5 16.5 12 22C11.5 16.5 7.5 12.5 2 12C7.5 11.5 11.5 7.5 12 2Z" fill="url(#thinkingStatusGrad)"/>
+              <defs>
+                <linearGradient id="thinkingStatusGrad" x1="2" y1="2" x2="22" y2="22" gradientUnits="userSpaceOnUse">
+                  <stop stop-color="#8ab4f8"/>
+                  <stop offset="0.6" stop-color="#c58af9"/>
+                  <stop offset="1" stop-color="#7cacf8"/>
+                </linearGradient>
+              </defs>
+            </svg>
+          </div>
+          <div class="thinking-status-card">
+            <div class="thinking-status-header">
+              <span class="thinking-pulse-dot" aria-hidden="true"></span>
+              <span class="thinking-status-text" id="thinkingStatusText">Thinking through your question…</span>
+            </div>
+            <div class="thinking-status-meta">
+              <span class="thinking-model-tag" id="thinkingModelTag">DRSSS 3.5 Flash Lite</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Floating Bottom Message Composer -->
+      <footer class="chat-dock">
+        <div class="composer-container">
+          <form class="composer-form" id="chatForm">
+            <!-- Top row: Multiline text input -->
+            <textarea
+              id="chatInput"
+              class="composer-textarea"
+              placeholder="Ask anything"
+              rows="1"
+              maxlength="4000"
+              aria-label="Message DRSSS AI"></textarea>
+            
+            <!-- Bottom toolbar: Horizontal row beneath the textarea -->
+            <div class="composer-toolbar">
+              <div class="composer-toolbar-left">
+                <!-- Model Selector Dropdown -->
+                <div class="dropdown-wrapper composer-dropdown" id="modelSelectorDropdown">
+                  <button type="button" class="selector-btn" id="modelSelectorBtn" aria-haspopup="listbox" aria-expanded="false" aria-label="Select AI Model">
+                    <span class="selector-icon">
+                      <svg viewBox="0 0 24 24" fill="currentColor" class="btn-sparkle-svg" width="13" height="13">
+                        <path d="M12 2C12.5 7.5 16.5 11.5 22 12C16.5 12.5 12.5 16.5 12 22C11.5 16.5 7.5 12.5 2 12C7.5 11.5 11.5 7.5 12 2Z"/>
+                      </svg>
+                    </span>
+                    <span class="selector-label" id="currentModelLabel">DRSSS 3.5 Flash Lite</span>
+                    <i class="fa-solid fa-chevron-down chevron-icon"></i>
+                  </button>
+
+                  <div class="dropdown-menu" id="modelDropdownMenu" role="listbox" aria-label="Available DRSSS AI Models">
+                    <!-- Option 1: DRSSS 3.5 Flash Lite -->
+                    <div class="dropdown-item active" data-model="gemini-3.5-flash-lite" role="option" aria-selected="true" tabindex="0">
+                      <div class="option-icon">
+                        <i class="fa-solid fa-bolt"></i>
+                      </div>
+                      <div class="option-body">
+                        <div class="option-title-row">
+                          <strong class="option-name">DRSSS 3.5 Flash Lite</strong>
+                          <span class="option-tag">Default</span>
+                        </div>
+                        <span class="option-desc">Fast and efficient for everyday tasks.</span>
+                      </div>
+                      <i class="fa-solid fa-check option-check"></i>
+                    </div>
+
+                    <!-- Option 2: DRSSS 3.6 Flash -->
+                    <div class="dropdown-item" data-model="gemini-3.6-flash" role="option" aria-selected="false" tabindex="0">
+                      <div class="option-icon">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                      </div>
+                      <div class="option-body">
+                        <div class="option-title-row">
+                          <strong class="option-name">DRSSS 3.6 Flash</strong>
+                          <span class="option-tag">Advanced</span>
+                        </div>
+                        <span class="option-desc">Advanced performance for complex tasks.</span>
+                      </div>
+                      <i class="fa-solid fa-check option-check"></i>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Thinking-Level Selector Dropdown -->
+                <div class="dropdown-wrapper composer-dropdown" id="thinkingSelectorDropdown">
+                  <button type="button" class="selector-btn" id="thinkingSelectorBtn" aria-haspopup="listbox" aria-expanded="false" aria-label="Select Thinking Level">
+                    <span class="selector-icon">
+                      <i class="fa-solid fa-brain"></i>
+                    </span>
+                    <span class="selector-label" id="currentThinkingLabel">Standard</span>
+                    <i class="fa-solid fa-chevron-down chevron-icon"></i>
+                  </button>
+
+                  <div class="dropdown-menu" id="thinkingDropdownMenu" role="listbox" aria-label="Select Thinking Reasoning Depth">
+                    <!-- Standard (medium) -->
+                    <div class="dropdown-item active" data-thinking="medium" role="option" aria-selected="true" tabindex="0">
+                      <div class="option-icon">
+                        <i class="fa-solid fa-gauge-simple-high"></i>
+                      </div>
+                      <div class="option-body">
+                        <div class="option-title-row">
+                          <strong class="option-name">Standard</strong>
+                          <span class="option-tag">Default</span>
+                        </div>
+                        <span class="option-desc">Balanced responses for everyday use.</span>
+                      </div>
+                      <i class="fa-solid fa-check option-check"></i>
+                    </div>
+
+                    <!-- Extended (high) -->
+                    <div class="dropdown-item" data-thinking="high" role="option" aria-selected="false" tabindex="0">
+                      <div class="option-icon">
+                        <i class="fa-solid fa-brain"></i>
+                      </div>
+                      <div class="option-body">
+                        <div class="option-title-row">
+                          <strong class="option-name">Extended</strong>
+                          <span class="option-tag">Deep</span>
+                        </div>
+                        <span class="option-desc">More reasoning for complex problems.</span>
+                      </div>
+                      <i class="fa-solid fa-check option-check"></i>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Right actions: char counter and send button -->
+              <div class="composer-toolbar-right">
+                <span class="char-count" id="charCount" aria-label="Character limit">0/4000</span>
+                <button type="submit" class="send-btn" id="sendBtn" aria-label="Send message" disabled>
+                  <svg viewBox="0 0 24 24" fill="currentColor" class="send-icon">
+                    <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+
+        <!-- Clean Non-Duplicated Disclaimer -->
+        <div class="dock-disclaimer">
+          <p>DRSSS AI can make mistakes. Verify important info.</p>
+        </div>
+      </footer>
+    </main>
+  </div>
+
+  <!-- Email & Password Authentication -->
+  <dialog class="app-modal auth-modal" id="authModal" aria-labelledby="authModalTitle">
+    <div class="modal-box auth-modal-box">
+      <button type="button" class="auth-close-btn" id="closeAuthModalBtn" aria-label="Close sign in">
+        <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+      </button>
+      <div class="auth-brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="currentColor" width="22" height="22"><path d="M12 2C12.5 7.5 16.5 11.5 22 12C16.5 12.5 12.5 16.5 12 22C11.5 16.5 7.5 12.5 2 12C7.5 11.5 11.5 7.5 12 2Z"/></svg>
+      </div>
+      <h2 id="authModalTitle" class="auth-title">Welcome back</h2>
+      <p class="auth-subtitle" id="authSubtitle">Sign in to your DRSSS AI account.</p>
+
+      <form id="loginForm" class="auth-form" novalidate>
+        <label class="auth-field-label" for="loginEmail">Email address</label>
+        <input class="auth-input" type="email" id="loginEmail" name="email" autocomplete="email" placeholder="you@example.com" maxlength="254" required>
+        <label class="auth-field-label" for="loginPassword">Password</label>
+        <div class="auth-password-wrap">
+          <input class="auth-input" type="password" id="loginPassword" name="password" autocomplete="current-password" placeholder="Enter your password" maxlength="128" required>
+          <button type="button" class="auth-toggle-password" data-password-target="loginPassword" aria-label="Show password"><i class="fa-regular fa-eye" aria-hidden="true"></i></button>
+        </div>
+        <p class="auth-error" id="loginError" role="alert" hidden></p>
+        <button class="auth-submit-btn" id="loginSubmitBtn" type="submit">Sign In</button>
+        <p class="auth-switch-text">Don't have an account? <button class="auth-link-btn" type="button" id="showRegisterBtn">Create account</button></p>
+      </form>
+
+      <form id="registerForm" class="auth-form" hidden novalidate>
+        <label class="auth-field-label" for="registerName">Name</label>
+        <input class="auth-input" type="text" id="registerName" name="name" autocomplete="name" placeholder="Your name" maxlength="80" required>
+        <label class="auth-field-label" for="registerEmail">Email address</label>
+        <input class="auth-input" type="email" id="registerEmail" name="email" autocomplete="email" placeholder="you@example.com" maxlength="254" required>
+        <label class="auth-field-label" for="registerPassword">Password</label>
+        <div class="auth-password-wrap">
+          <input class="auth-input" type="password" id="registerPassword" name="password" autocomplete="new-password" placeholder="At least 8 characters" minlength="8" maxlength="128" required>
+          <button type="button" class="auth-toggle-password" data-password-target="registerPassword" aria-label="Show password"><i class="fa-regular fa-eye" aria-hidden="true"></i></button>
+        </div>
+        <label class="auth-field-label" for="registerConfirmPassword">Confirm password</label>
+        <div class="auth-password-wrap">
+          <input class="auth-input" type="password" id="registerConfirmPassword" name="confirmPassword" autocomplete="new-password" placeholder="Re-enter your password" minlength="8" maxlength="128" required>
+          <button type="button" class="auth-toggle-password" data-password-target="registerConfirmPassword" aria-label="Show password"><i class="fa-regular fa-eye" aria-hidden="true"></i></button>
+        </div>
+        <p class="auth-error" id="registerError" role="alert" hidden></p>
+        <button class="auth-submit-btn" id="registerSubmitBtn" type="submit">Create Account</button>
+        <p class="auth-switch-text">Already have an account? <button class="auth-link-btn" type="button" id="showLoginBtn">Sign in</button></p>
+      </form>
+      <p class="auth-footnote">Your account is secured with password hashing and a private session.</p>
+    </div>
+  </dialog>
+
+  <!-- Delete Conversation Modal -->
+  <dialog class="app-modal" id="confirmModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <i class="fa-solid fa-trash-can modal-icon"></i>
+        <h3>Delete conversation?</h3>
+      </div>
+      <p class="modal-body" id="modalBodyText">This will delete the conversation and remove it from your chat history.</p>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" id="cancelModalBtn">Cancel</button>
+        <button class="btn btn-danger" id="confirmDeleteBtn">Delete</button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Toast Notification Container -->
+  <div class="toast-container" id="toastContainer" aria-live="assertive"></div>
+
+  <!-- CDN Dependencies: Marked.js & Highlight.js -->
+  <script src="https://cdn.jsdelivr.net/npm/marked@12.0.0/marked.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+
+  <!-- Main Application Script -->
+  <script src="script.js"></script>
+</body>
+</html>
