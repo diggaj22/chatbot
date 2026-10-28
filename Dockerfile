@@ -47,7 +47,11 @@ RUN apt-get update && \
 WORKDIR /app
 
 # Create non-root system user for production process security
-RUN useradd -m -u 1000 -s /bin/bash appuser
+RUN if id -u appuser >/dev/null 2>&1; then \
+        echo "appuser already exists"; \
+    else \
+        useradd -m -s /bin/bash appuser; \
+    fi
 
 # Copy compiled C++ binary from builder stage
 COPY --from=builder /app/build/gemini_server /app/gemini_server
