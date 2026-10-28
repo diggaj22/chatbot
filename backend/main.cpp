@@ -61,7 +61,7 @@ struct ChatResult {
     bool success = false;
     std::string reply;
     std::string model_used;
-    std::string thinking_level = "medium";
+    std::string thinking_level = "minimal";
     bool fallback_used = false;
     std::string error;
 };
@@ -95,10 +95,12 @@ static std::string ValidateModel(const std::string& input) {
 
 // Utility: validate thinking level against supported levels
 static std::string ValidateThinkingLevel(const std::string& input) {
+    // UI "Standard" sends the legacy value "medium". Map it to minimal thinking
+    // for lower latency; "Extended" continues to use high thinking.
     if (input == "high") {
         return "high";
     }
-    return "medium";
+    return "minimal";
 }
 
 // ---------------------------------------------------------------------------
@@ -606,7 +608,9 @@ ChatResult GenerateChatResponse(
         {"systemInstruction", {
             {"parts", json::array({{
                 {"text", "You are an intelligent, helpful, and concise AI assistant named DRSSS AI. "
-                         "You provide well-structured, clear Markdown answers with syntax-highlighted code when applicable. "
+                         "For greetings and simple questions, answer directly in a few sentences. "
+                         "For academic or technical questions, give a complete, focused answer without unnecessary preambles or repetition; add detailed sections and examples when the task needs them or the user asks. "
+                         "Use clear Markdown and code blocks when helpful. "
                          "Credit: Designed and built by Shantanu, Diggaj, Raj, Suraj, and Sanika."}
             }})}
         }}
@@ -751,7 +755,7 @@ int main(int argc, char* argv[]) {
                 {"primary_advanced", MODEL_PRIMARY_ADVANCED},
                 {"fallback", MODEL_FALLBACK}
             }},
-            {"thinking_levels", json::array({"medium", "high"})},
+            {"thinking_levels", json::array({"minimal", "high"})},
             {"credits", "Built by Shantanu, Diggaj, Raj, Suraj, and Sanika"}
         };
         res.set_content(health_res.dump(), "application/json");

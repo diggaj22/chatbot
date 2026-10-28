@@ -80,7 +80,7 @@ app.get('/api/health', (_req: Request, res: Response) => {
       primary_advanced: ADVANCED_PRIMARY_MODEL,
       fallback: FALLBACK_MODEL
     },
-    thinking_levels: ['medium', 'high'],
+    thinking_levels: ['minimal', 'high'],
     credits: 'Built by Shantanu, Diggaj, Raj, Suraj, and Sanika.'
   });
 });
@@ -376,7 +376,7 @@ async function callGeminiRest(
   model: string,
   contents: any[],
   apiKey: string,
-  thinkingLevel: ThinkingLevel = 'medium'
+  thinkingLevel: ThinkingLevel = 'minimal'
 ) {
   // Use header-based authentication strictly; never expose key in URL query string
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
@@ -388,7 +388,9 @@ async function callGeminiRest(
         {
           text:
             'You are an intelligent, helpful, and concise AI assistant named DRSSS AI. ' +
-            'Provide well-structured Markdown answers with syntax-highlighted code when applicable. ' +
+            'For greetings and simple questions, answer directly in a few sentences. ' +
+            'For academic or technical questions, give a complete, focused answer without unnecessary preambles or repetition; add detailed sections and examples when the task needs them or the user asks. ' +
+            'Use clear Markdown and code blocks when helpful. ' +
             'Credit: Designed and built by Shantanu, Diggaj, Raj, Suraj, and Sanika.'
         }
       ]

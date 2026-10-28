@@ -16,7 +16,7 @@ export const VALID_PRIMARY_MODELS = [
 
 export type PrimaryModelId = typeof VALID_PRIMARY_MODELS[number];
 
-export const VALID_THINKING_LEVELS = ['medium', 'high'] as const;
+export const VALID_THINKING_LEVELS = ['minimal', 'high'] as const;
 export type ThinkingLevel = typeof VALID_THINKING_LEVELS[number];
 
 export interface ChatMessage {
@@ -52,14 +52,13 @@ export function validateModel(requested?: string): string {
  * Validates thinking level against supported levels
  */
 export function validateThinkingLevel(requested?: string): ThinkingLevel {
-  if (!requested || typeof requested !== 'string') {
-    return 'medium';
-  }
-  const normalized = requested.trim().toLowerCase();
-  if (normalized === 'high') {
+  // Backward-compatible mapping: the UI's "Standard" option historically sends
+  // "medium". Use Gemini's minimal thinking level for quicker everyday replies.
+  // The UI's "Extended" option still maps to high.
+  if (typeof requested === 'string' && requested.trim().toLowerCase() === 'high') {
     return 'high';
   }
-  return 'medium';
+  return 'minimal';
 }
 
 /**
@@ -89,7 +88,7 @@ export function getThinkingDisplayName(level: string): string {
 /**
  * Builds generationConfig object including thinkingConfig
  */
-export function buildGenerationConfig(thinkingLevel: ThinkingLevel = 'medium') {
+export function buildGenerationConfig(thinkingLevel: ThinkingLevel = 'minimal') {
   return {
     temperature: 0.7,
     topP: 0.95,

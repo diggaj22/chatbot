@@ -2199,3 +2199,206 @@ html, body {
   line-height: 1.45;
   text-align: center;
 }
+
+/* --------------------------------------------------------------------------
+   Final layout hardening: long conversations and sidebar overflow
+   -------------------------------------------------------------------------- */
+html,
+body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.app-layout {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  min-height: 0;
+}
+
+.sidebar {
+  min-width: 0;
+  overflow-x: hidden;
+}
+
+/* The current thread markup uses .thread-info (not .thread-content).
+   Constrain its flex sizing so long titles never create a horizontal bar. */
+.threads-container {
+  min-width: 0;
+  width: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.threads-list {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.thread-item {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  gap: 0.45rem;
+}
+
+.thread-info {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.thread-title-text {
+  display: block;
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.thread-delete-btn {
+  flex: 0 0 auto;
+}
+
+/* Keep flex children shrinkable so very long messages don't expand the app. */
+.main-content,
+.chat-viewport,
+.messages-list,
+.message-row,
+.assistant-content-wrapper,
+.assistant-content,
+.user-bubble {
+  min-width: 0;
+}
+
+.main-content {
+  min-height: 0;
+  max-width: 100%;
+}
+
+.chat-viewport {
+  width: 100%;
+  max-width: 100%;
+  min-height: 0;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+}
+
+.messages-list {
+  flex: 0 0 auto;
+  width: 100%;
+  max-width: var(--content-max-width);
+}
+
+.message-row {
+  max-width: 100%;
+}
+
+.assistant-content-wrapper {
+  flex: 1 1 0;
+  width: calc(100% - 40px);
+  max-width: calc(100% - 40px);
+  overflow-wrap: anywhere;
+}
+
+.assistant-meta {
+  min-width: 0;
+  max-width: 100%;
+  flex-wrap: wrap;
+}
+
+.assistant-content,
+.user-bubble {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.assistant-content p,
+.assistant-content li,
+.assistant-content blockquote,
+.assistant-content th,
+.assistant-content td,
+.assistant-content a {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+/* Wide code should scroll inside its own panel, never the entire page. */
+.code-block-wrapper {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.code-block-wrapper pre {
+  display: block;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: auto;
+  max-height: 480px;
+  white-space: pre;
+  overflow-wrap: normal;
+  word-break: normal;
+  overscroll-behavior-x: contain;
+}
+
+.code-block-wrapper pre code {
+  white-space: pre;
+  overflow-wrap: normal;
+  word-break: normal;
+}
+
+/* Tables and media remain inside the assistant response column. */
+.assistant-content table {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  table-layout: auto;
+}
+
+.assistant-content img,
+.assistant-content video,
+.assistant-content iframe,
+.assistant-content svg {
+  max-width: 100%;
+}
+
+.assistant-content img,
+.assistant-content video {
+  height: auto;
+}
+
+.composer-container,
+.composer-form,
+.composer-textarea,
+.composer-toolbar {
+  min-width: 0;
+  max-width: 100%;
+}
+
+@media (max-width: 768px) {
+  .assistant-content-wrapper {
+    width: calc(100% - 36px);
+    max-width: calc(100% - 36px);
+  }
+
+  .user-bubble {
+    max-width: 92%;
+  }
+
+  .assistant-content th,
+  .assistant-content td {
+    padding: 0.45rem 0.55rem;
+  }
+}

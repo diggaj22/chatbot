@@ -44,12 +44,14 @@ test('validateModel correctly validates allowlisted models and falls back to def
   assert.equal(validateModel(''), PRIMARY_DEFAULT_MODEL);
 });
 
-test('validateThinkingLevel validates medium and high levels safely', () => {
-  assert.equal(validateThinkingLevel('medium'), 'medium');
+test('validateThinkingLevel maps Standard to minimal and Extended to high', () => {
+  // The current UI sends legacy "medium" for Standard; normalize it to minimal.
+  assert.equal(validateThinkingLevel('medium'), 'minimal');
+  assert.equal(validateThinkingLevel('minimal'), 'minimal');
   assert.equal(validateThinkingLevel('high'), 'high');
-  // Unknown or invalid defaults to medium (Standard)
-  assert.equal(validateThinkingLevel('extreme'), 'medium');
-  assert.equal(validateThinkingLevel(undefined), 'medium');
+  // Unknown or missing values use the fast Standard configuration.
+  assert.equal(validateThinkingLevel('extreme'), 'minimal');
+  assert.equal(validateThinkingLevel(undefined), 'minimal');
 });
 
 test('getModelDisplayName maps internal IDs to exact DRSSS AI branding', () => {
@@ -65,9 +67,9 @@ test('getThinkingDisplayName maps medium and high to Standard and Extended', () 
   assert.equal(getThinkingDisplayName('high'), 'Extended');
 });
 
-test('buildGenerationConfig outputs thinkingConfig with specified level', () => {
-  const stdConfig = buildGenerationConfig('medium');
-  assert.equal(stdConfig.thinkingConfig.thinkingLevel, 'medium');
+test('buildGenerationConfig outputs fast Standard and deep Extended levels', () => {
+  const stdConfig = buildGenerationConfig('minimal');
+  assert.equal(stdConfig.thinkingConfig.thinkingLevel, 'minimal');
 
   const extConfig = buildGenerationConfig('high');
   assert.equal(extConfig.thinkingConfig.thinkingLevel, 'high');
