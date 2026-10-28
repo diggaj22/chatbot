@@ -486,6 +486,51 @@ bool ExtractReplyFromResponse(const std::string& raw_json, std::string& out_text
     }
 }
 
+// Redact credentials and keep upstream diagnostics short enough for safe logs/UI.
+static std::string SanitizeUpstreamDiagnostic(std::string message) {
+    try {
+        message = std::regex_replace(message, std::regex(R"(AIza[0-9A-Za-z_-]{20,})"), "[REDACTED]");
+        message = std::regex_replace(message, std::regex(R"((api[_-]?key|key)\s*[:=]\s*[^,\s\"}]+)", std::regex::icase), "$1=[REDACTED]");
+    } catch (...) {
+        // Keep the original diagnostic if a regex engine unexpectedly fails.
+    }
+    if (message.size() > 500) message.resize(500);
+    return message;
+}
+
+// Return the real HTTP/network reason instead of silently dropping non-200 API errors.
+static std::string DescribeUpstreamFailure(const CurlResponse& response) {
+    if (!response.success) {
+        return SanitizeUpstreamDiagnostic("Network transport error: " + response.error_message);
+    }
+
+    try {
+        const json body = json::parse(response.body);
+        if (body.contains("error") && body["error"].is_object()) {
+            std::string message = "HTTP " + std::to_string(response.status_code);
+            if (body["error"].contains("status") && body["error"]["status"].is_string()) {
+                message += " (" + body["error"]["status"].get<std::string>() + ")";
+            }
+            if (body["error"].contains("message") && body["error"]["message"].is_string()) {
+                message += ": " + body["error"]["message"].get<std::string>();
+            }
+            return SanitizeUpstreamDiagnostic(message);
+        }
+    } catch (...) {
+        // If the provider did not return JSON, report status without echoing a potentially large body.
+    }
+
+    std::string text, parse_error;
+    if (response.status_code == 200) {
+        ExtractReplyFromResponse(response.body, text, parse_error);
+        if (!parse_error.empty()) {
+            return SanitizeUpstreamDiagnostic("HTTP 200 but no usable answer was returned: " + parse_error);
+        }
+        return "HTTP 200 but no usable answer was returned";
+    }
+    return "HTTP " + std::to_string(response.status_code) + " with no readable upstream error message";
+}
+
 /**
  * Check if the returned HTTP status code or error qualifies for failover retry
  * (Rate Limit 429, Quota exhaustion, 5xx server errors, or curl transport failures)
@@ -623,10 +668,20 @@ ChatResult GenerateChatResponse(
         }
     }
 
-    // If both models failed
+    // If both models failed, preserve the actual provider status and reason.
+    // Previously, non-200 HTTP responses left error_detail empty, hiding the cause
+    // (invalid API key, quota, model access, invalid request, etc.) from Render logs.
     result.success = false;
-    std::string raw_error = fallback_res.success ? error_detail : fallback_res.error_message;
-    result.error = "Both primary (" + primary_model + ") and fallback (" + MODEL_FALLBACK + ") models were unable to complete your request. " + raw_error;
+    const std::string primary_error = DescribeUpstreamFailure(primary_res);
+    const std::string fallback_error = DescribeUpstreamFailure(fallback_res);
+    std::cerr << "[" << GetTimestamp() << "] [UPSTREAM ERROR] Primary model "
+              << primary_model << ": " << primary_error << std::endl;
+    std::cerr << "[" << GetTimestamp() << "] [UPSTREAM ERROR] Fallback model "
+              << MODEL_FALLBACK << ": " << fallback_error << std::endl;
+    result.error = "Both primary (" + primary_model + ") and fallback (" + MODEL_FALLBACK +
+                   ") models failed. Primary reason: " + primary_error +
+                   ". Fallback reason: " + fallback_error;
+    result.error = SanitizeUpstreamDiagnostic(result.error);
     std::cerr << "[" << GetTimestamp() << "] [ERROR] " << result.error << std::endl;
     return result;
 }
